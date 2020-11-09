@@ -9,6 +9,7 @@ import argparse
 import socket
 import time
 
+import logging
 import tensorboard_logger as tb_logger
 import torch
 import torch.optim as optim
@@ -119,8 +120,28 @@ def parse_option():
     if not os.path.isdir(opt.save_folder):
         os.makedirs(opt.save_folder)
 
+    # sumple logger
+    opt.loggers = get_logger(os.path.join(opt.save_folder, '{}.log'.format(opt.model_s)))
+
     return opt
 
+def get_logger(filename, verbosity=1, name=None):
+    level_dict = {0: logging.DEBUG, 1: logging.INFO, 2: logging.WARNING}
+    formatter = logging.Formatter(
+        "[%(asctime)s][%(filename)s][line:%(lineno)d][%(levelname)s] %(message)s"
+    )
+    logger = logging.getLogger(name)
+    logger.setLevel(level_dict[verbosity])
+
+    fh = logging.FileHandler(filename, "w")
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    sh = logging.StreamHandler()
+    sh.setFormatter(formatter)
+    logger.addHandler(sh)
+
+    return logger
 
 def get_teacher_name(model_path):
     """parse teacher name"""
@@ -286,6 +307,7 @@ def main():
     # validate teacher accuracy
     teacher_acc, _, _ = validate(val_loader, model_t, criterion_cls, opt)
     print('teacher accuracy: ', teacher_acc)
+    opt.loggers.info('teacher accuracy: ', teacher_acc)
 
     # routine
     for epoch in range(1, opt.epochs + 1):
@@ -297,6 +319,7 @@ def main():
         train_acc, train_loss = train(epoch, train_loader, module_list, criterion_list, optimizer, opt)
         time2 = time.time()
         print('epoch {}, total time {:.2f}'.format(epoch, time2 - time1))
+        opt.loggers.info('epoch {}, total time {:.2f}'.format(epoch, time2 - time1))
 
         logger.log_value('train_acc', train_acc, epoch)
         logger.log_value('train_loss', train_loss, epoch)
@@ -317,6 +340,7 @@ def main():
             }
             save_file = os.path.join(opt.save_folder, '{}_best.pth'.format(opt.model_s))
             print('saving the best model!')
+            opt.loggers.info('saving the best model!')
             torch.save(state, save_file)
 
         # regular saving
@@ -333,6 +357,7 @@ def main():
     # This best accuracy is only for printing purpose.
     # The results reported in the paper/README is from the last epoch. 
     print('best accuracy:', best_acc)
+    opt.loggers.info('best accuracy:', best_acc)
 
     # save model
     state = {
