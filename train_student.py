@@ -9,7 +9,6 @@ import argparse
 import socket
 import time
 
-import logging
 import tensorboard_logger as tb_logger
 import torch
 import torch.optim as optim
@@ -23,7 +22,7 @@ from models.util import Connector, Translator, Paraphraser
 
 from dataset.cifar100 import get_cifar100_dataloaders, get_cifar100_dataloaders_sample
 
-from helper.util import adjust_learning_rate
+from helper.util import adjust_learning_rate, get_logger
 
 from distiller_zoo import DistillKL, HintLoss, Attention, Similarity, Correlation, VIDLoss, RKDLoss
 from distiller_zoo import PKT, ABLoss, FactorTransfer, KDSVD, FSP, NSTLoss
@@ -31,6 +30,7 @@ from crd.criterion import CRDLoss
 
 from helper.loops import train_distill as train, validate
 from helper.pretrain import init
+
 
 
 def parse_option():
@@ -124,24 +124,6 @@ def parse_option():
     opt.loggers = get_logger(os.path.join(opt.save_folder, '{}.log'.format(opt.model_s)))
 
     return opt
-
-def get_logger(filename, verbosity=1, name=None):
-    level_dict = {0: logging.DEBUG, 1: logging.INFO, 2: logging.WARNING}
-    formatter = logging.Formatter(
-        "[%(asctime)s][%(filename)s][line:%(lineno)d][%(levelname)s] %(message)s"
-    )
-    logger = logging.getLogger(name)
-    logger.setLevel(level_dict[verbosity])
-
-    fh = logging.FileHandler(filename, "w")
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    sh = logging.StreamHandler()
-    sh.setFormatter(formatter)
-    logger.addHandler(sh)
-
-    return logger
 
 def get_teacher_name(model_path):
     """parse teacher name"""
