@@ -121,7 +121,7 @@ def parse_option():
         os.makedirs(opt.save_folder)
 
     # sumple logger
-    opt.loggers = get_logger(os.path.join(opt.save_folder, '{}.log'.format(opt.model_s)))
+    opt.loggers = get_logger(os.path.join(opt.save_folder, '{}_{}.log'.format(opt.model_s,opt.distill)))
 
     return opt
 
@@ -339,7 +339,7 @@ def main():
     # This best accuracy is only for printing purpose.
     # The results reported in the paper/README is from the last epoch. 
     print('best accuracy:', best_acc)
-    opt.loggers.info('best accuracy:', best_acc)
+    opt.loggers.info('best accuracy:{}'.format(best_acc))
 
     # save model
     state = {
